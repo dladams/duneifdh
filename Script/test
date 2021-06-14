@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# test
+#
+# Run tests for project duneifdh.
+# Tests are run in the current directory.
+# Project must be installed with tests and set up.
+
+runtest() {
+  COM=$1
+  ((TESTCOUNT=TESTCOUNT+1))
+  echo
+  echo "-----------------------------------------------"
+  echo Test $TESTCOUNT
+  echo Command: $1
+  echo "-----------------------------------------------"
+  $COM
+  STAT=$?
+  echo "-----------------------------------------------"
+  echo Return status: $STAT
+  echo "-----------------------------------------------"
+  return $STAT
+}
+
+PROJ=duneifdh
+TOPDIR=$DUNEIFDH_DIR
+TSTDIR=$TOPDIR/test
+
+if [ -z "$DUNEIFDH_DIR" ]; then
+  echo Please set up project $DUNEIFDH
+  exit 1
+fi
+
+if [ ! -d $TSTDIR -o ! -r $TSTDIR ]; then
+  echo Unable to find test directory $TSTDIR
+  exit 2
+fi
+
+TESTCOUNT=0
+if
+  runtest $TSTDIR/test_MyXform &&
+  runtest "root.exe -b -q $TSTDIR/test_MyXform.C" &&
+  runtest "root.exe -b -q $DUNEIFDH_DIR/root/roothello.C" &&
+  runtest $TSTDIR/test_MyTool &&
+  runtest myhello
+  runtest "python $DUNEIFDH_DIR/python/pyhello.py"
+then
+  echo
+  echo All tests pass.
+else
+  echo
+  echo Test failed.
+fi
