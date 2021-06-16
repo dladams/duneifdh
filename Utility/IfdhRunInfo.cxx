@@ -9,6 +9,20 @@ using std::string;
 using std::cout;
 using std::endl;
 using StringVector = StringManipulator::StringVector;
+using NameMap = IfdhRunInfo::NameMap;
+using FloatVector = std::vector<float>;
+
+//**********************************************************************
+
+namespace {
+
+int mapint(const NameMap& nmap, string nam, int def) {
+  NameMap::const_iterator kval = nmap.find(nam);
+  if ( kval == nmap.end() ) return def;
+  return std::stoi(kval->second);
+}
+
+}
 
 //**********************************************************************
 
@@ -26,7 +40,7 @@ int IfdhRunInfo::convert(const Name& blob, NameMap& nmap) {
     while ( jpos < len && slin[jpos] != ':' ) ++jpos;
     sfld = slin.substr(ipos, jpos-ipos);
     if ( jpos+2 < len ) sval = slin.substr(jpos+2);
-    cout << myname << sfld << ": " << sval << endl;
+    //cout << myname << sfld << ": " << sval << endl;
     if ( sfld.size() == 0 || sval.size() == 0 ) {
       cout << myname << "ERROR: Unexpected line: " << "\"" << slin << "\"" << endl;
       return 1;
@@ -41,13 +55,69 @@ int IfdhRunInfo::convert(const Name& blob, NameMap& nmap) {
 
 //**********************************************************************
 
+int IfdhRunInfo::convert(const NameMap& nmap, RunData& rda) {
+  const Name myname = "IfdhRunInfo::convert: ";
+  rda.clear();
+  NameMap::const_iterator kruns = nmap.find("Runs");
+  if ( kruns == nmap.end() ) {
+    cout << myname << "ERROR: Metadata is missing Runs field." << endl;
+    return 1;
+  }
+  string sruns = kruns->second;
+  string sdet;
+  Index irun = 0;
+  if ( sruns.size() ) {
+    string::size_type ipos = sruns.find(".");
+    string::size_type jpos = sruns.find(" (");
+    string::size_type kpos = sruns.find(")");
+    if ( ipos < jpos && jpos < kpos && (kpos+1) == sruns.size() ) {
+      string srun = sruns.substr(0, ipos);
+      irun = std::stoi(srun);
+      sdet = sruns.substr(jpos+2, kpos-jpos-2);
+    }
+    if ( sdet == "protodune-sp" ) {
+    } else if ( sdet == "iceberg" ) {
+      FloatVector gainVals = {4.7, 7.8, 14.0, 25.0, 0.0};
+      FloatVector shapingVals = {1.0, 0.5, 3.0, 2.0, 0.0};
+      FloatVector pulserSourceVals = {0, 1, 2, 99};
+      rda.setGain(gainVals[mapint(nmap, "DUNE_data.fegain", 4)]);
+      rda.setShaping(shapingVals[mapint(nmap, "DUNE_data.feshapingtime", 4)]);
+      rda.setPulserSource(mapint(nmap, "DUNE_data.calibpulsemode", 99));
+      rda.setPulserAmplitude(mapint(nmap, "DUNE_data.calibpulsedac", 999));
+    } else {
+      cout << myname << "ERROR: Metadata has invalid Runs field: " << sruns << endl;
+      cout << myname << "       " << ipos << ", " << jpos << ", " << kpos
+           << ": " << sdet << endl;
+      return 2;
+    }
+  }
+  rda.setRun(irun);
+  return 0;
+}
+
+//**********************************************************************
+
 IfdhRunInfo::IfdhRunInfo(Name scam, Index irun)
 : m_scam(scam), m_irun(irun), m_ifil(maxFileCount()) {
   ifdh_ns::ifdh ifd;
   ifd.getProxy();
-  Name sqry = "Dune.campaign " + scam + " and run_number "
-                + std::to_string(irun);
-  m_files = ifd.translateConstraints(sqry);
+  // Flag to include campaign in query.
+  bool queryCampaign = true;
+  // Required file prefix.
+  string filePrefix;
+  if ( scam == "np04" ) {
+    queryCampaign = false;
+    filePrefix = "np04_";
+  }
+  // For np04 (protoDUNE-SP)
+  Index lpre = filePrefix.size();
+  Name sqry = "run_number " + std::to_string(irun);
+  if ( queryCampaign ) sqry += " and DUNE.campaign " + scam;
+  for ( string sfil : ifd.translateConstraints(sqry) ) {
+    if ( lpre == 0 || sfil.substr(0, lpre) == filePrefix ) {
+      m_files.push_back(sfil);
+    }
+  }
 }
 
 //**********************************************************************
@@ -80,6 +150,21 @@ int IfdhRunInfo::getIntMetadata(Name sfld, int idef) const {
   int ival = idef;
   ival = std::stoi(ient->second);
   return ival;
+}
+
+//**********************************************************************
+
+RunData IfdhRunInfo::getRunData() const {
+  const Name myname = "IfdhRunInfo::getRunData: ";
+  RunData rda;
+  if ( convert(m_nmap, rda) == 0 ) {
+    if ( rda.run() != run() ) {
+      cout << myname << "ERROR: Metadata has inconsistent run: "
+           << rda.run() << " != " << run() << endl;
+      rda.clear();
+    }
+  }
+  return rda;
 }
 
 //**********************************************************************

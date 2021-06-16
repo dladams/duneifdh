@@ -25,7 +25,7 @@ using Index = IfdhRunInfo::Index;
 
 //**********************************************************************
 
-int test_IfdhRunInfo(Index irun, int ivalexp) {
+int test_IfdhRunInfo(Index irun, int ivalexp, string scam) {
   const string myname = "test_IfdhRunInfo: ";
 #ifdef NDEBUG
   cout << myname << "NDEBUG must be off." << endl;
@@ -36,7 +36,6 @@ int test_IfdhRunInfo(Index irun, int ivalexp) {
   cout << myname << line << endl;
   float scale = 100.0;
   cout << myname << "Create object." << endl;
-  string scam = "iceberg";
   IfdhRunInfo myo(scam, irun);
 
   cout << myname << line << endl;
@@ -49,6 +48,13 @@ int test_IfdhRunInfo(Index irun, int ivalexp) {
   Index nfil = myo.fileCount();
   cout << myname << "File count: " << nfil << endl;
   assert( nfil >= 1 );
+  for ( Index ifil=0; ifil<nfil; ++ifil ) {
+    cout << myname << "  " << myo.file(ifil) << endl;
+    if ( ifil > 25 ) {
+      cout << myname << "  ..." << endl;
+      break;
+    }
+  }
 
   cout << myname << line << endl;
   cout << myname << "Fetch metadata blob" << endl;
@@ -57,7 +63,6 @@ int test_IfdhRunInfo(Index irun, int ivalexp) {
   cout << myname << "----- Start metadata -----" << endl;
   cout << smd;
   cout << myname << "----- End metadata -----" << endl;
-  assert( nfil == 1 );
 
   cout << myname << line << endl;
   string svalexp = std::to_string(ivalexp);
@@ -74,6 +79,15 @@ int test_IfdhRunInfo(Index irun, int ivalexp) {
   assert( ival == ivalexp );
 
   cout << myname << line << endl;
+  cout << myname << "Check run data" << endl;
+  RunData rda = myo.getRunData();
+  cout << myname << "Run: " << rda.run() << endl;
+  assert( rda.run() == irun );
+  cout << myname << "----- Start run data -----" << endl;
+  cout << rda << endl;
+  cout << myname << "----- End run data -----" << endl;
+
+  cout << myname << line << endl;
   cout << myname << "Done." << endl;
   return 0;
 }
@@ -83,10 +97,11 @@ int test_IfdhRunInfo(Index irun, int ivalexp) {
 int main(int argc, char* argv[]) {
   Index irun = 8990;
   int ivalexp = 2;
+  string scam = "iceberg";
   if ( argc > 1 ) {
     string sarg = argv[1];
     if ( sarg == "-h" ) {
-      cout << "Usage: " << argv[0] << "[RUN [FEGAIN]]" << endl;
+      cout << "Usage: " << argv[0] << "[RUN [FEGAIN [CAM]]]" << endl;
       return 0;
     }
     irun = stoi(sarg);
@@ -95,7 +110,10 @@ int main(int argc, char* argv[]) {
     string sarg = argv[2];
     ivalexp = stoi(sarg);
   }
-  return test_IfdhRunInfo(irun, ivalexp);
+  if ( argc > 3 ) {
+    scam = argv[3];
+  }
+  return test_IfdhRunInfo(irun, ivalexp, scam);
 }
 
 //**********************************************************************
