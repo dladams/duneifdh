@@ -75,11 +75,13 @@ int IfdhRunInfo::convert(const NameMap& nmap, RunData& rda) {
       irun = std::stoi(srun);
       sdet = sruns.substr(jpos+2, kpos-jpos-2);
     }
+    FloatVector gainVals = {4.7, 7.8, 14.0, 25.0, 0.0};
+    FloatVector shapingVals = {0.5, 1.0, 2.0, 3.0, 0.0};
+    FloatVector shapingValsIb5 = {1.0, 0.5, 3.0, 2.0, 0.0};
+    FloatVector pulserSourceVals = {0, 1, 2, 99};
     if ( sdet == "protodune-sp" ) {
     } else if ( sdet == "iceberg" ) {
-      FloatVector gainVals = {4.7, 7.8, 14.0, 25.0, 0.0};
-      FloatVector shapingVals = {1.0, 0.5, 3.0, 2.0, 0.0};
-      FloatVector pulserSourceVals = {0, 1, 2, 99};
+      if ( irun >= 8198 && irun <=9743 ) shapingVals = shapingValsIb5;
       rda.setGain(gainVals[mapint(nmap, "DUNE_data.fegain", 4)]);
       rda.setShaping(shapingVals[mapint(nmap, "DUNE_data.feshapingtime", 4)]);
       rda.setPulserSource(mapint(nmap, "DUNE_data.calibpulsemode", 99));
