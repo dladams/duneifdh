@@ -118,6 +118,7 @@ IfdhRunInfo::IfdhRunInfo(Name scam, Index irun)
       m_files.push_back(sfil);
     }
   }
+  getMetadataBlob(0);
 }
 
 //**********************************************************************
