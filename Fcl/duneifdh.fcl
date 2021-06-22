@@ -1,0 +1,14 @@
+# duneifdh.fcl
+
+tools.icebergIfdhRunData: {
+  tool_type: IfdhRunDataTool
+  LogLevel: 1
+  Campaign: iceberg
+}
+
+tools.pdspIfdhRunData: {
+  tool_type: IfdhRunDataTool
+  LogLevel: 1
+  Campaign: protodune
+}
+

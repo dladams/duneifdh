@@ -67,7 +67,7 @@ include(${ROOT_USE_FILE})
 # Subdirectories to process.
 #add_subdirectory(Interface)
 add_subdirectory(Script)
-#add_subdirectory(Fcl)
+add_subdirectory(Fcl)
 #add_subdirectory(Root)
 add_subdirectory(Utility)
 #add_subdirectory(Data)
