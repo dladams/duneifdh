@@ -6,7 +6,7 @@ include_directories($ENV{IFDHC_FQ_DIR}/inc)
 # Build a utility library.
 set(PKGLIB ${PROJECT_NAME})
 find_library(libifdh NAMES ifdh)
-find_library(libdunecommon NAMES dune_DuneCommon)
+find_library(libdunecommon NAMES dune_DuneCommon_Utility)
 #message(FATAL_ERROR "service_lib_list: ${service_lib_list}")
 FILE(GLOB MYSRCS *.cxx)
 add_library(${PKGLIB} SHARED ${MYSRCS})
